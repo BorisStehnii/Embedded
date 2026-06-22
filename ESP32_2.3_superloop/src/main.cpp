@@ -6,11 +6,13 @@ const int LED_3 = 2;
 
 #define BUTTON_PIN 4
 
+// Інтервали для миготіння
 #define INTERVAL 500
 #define PING_LED 250
 
 #define DEBOUNCE_TIME 50
 
+// Змінні стану світлодіодів
 bool ledState_1 = false;
 bool ledState_2 = false;
 bool ledState_3 = false;
@@ -24,7 +26,7 @@ int lastBounceTime = 0;
 bool lastButtonState = HIGH;  
 bool blinkingMode = false;
 
-
+// Функція для скидання стану світлодіодів та таймерів
 void resetBlink(unsigned long now) {
   ledState_1 = false;
   ledState_2 = false;
@@ -46,7 +48,9 @@ void resetBlink(unsigned long now) {
   }
 }
 
+// Функція для керування миготінням світлодіодів пряме та зворотне
 void setBlink_1(int now_1, bool State, int lastLED_direct[], int lastLED_convers[]) {
+  // Пряме миготіння
   if (State){
 
     if (now_1 - lastLED_direct[0] >= INTERVAL) {
@@ -67,7 +71,7 @@ void setBlink_1(int now_1, bool State, int lastLED_direct[], int lastLED_convers
         digitalWrite(LED_3, ledState_3 ? HIGH : LOW);
     }
   }
-
+  // Зворотне миготіння
   else {
 
     if (now_1 - lastLED_convers[0] >= INTERVAL) {
@@ -112,25 +116,13 @@ void loop() {
       lastBounceTime = now;
       // Реверс режиму миготіння
       blinkingMode = !blinkingMode;
+      // Скидання стану світлодіодів та таймерів
       resetBlink(now);
     }
   }
 
   lastButtonState = buttonState;
-
-
+  
   setBlink_1(now, blinkingMode, lastLED_Direct, lastLED_Convers);
   
-
-  // bool buttonState = digitalRead(BUTTON_PIN);
-
-  // if (lastButton && !buttonState) {
-  //   if (now - lastBounceTime >= DEBOUNCE_TIME) {
-  //     lastBounceTime = now;
-  //     ledState_3 = !ledState_3;
-  //     digitalWrite(LED_3, ledState_3 ? HIGH : LOW);
-  //     Serial.print("GREEN\n");
-  //   }
-  // }
-  // lastButton = buttonState;
 } 
