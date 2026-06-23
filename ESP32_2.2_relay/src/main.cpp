@@ -52,8 +52,8 @@ void loop() {
   unsigned long now = millis();
 
   static unsigned long time_command_change_state = 0;
-  static unsigned long relay_operation_time = 0;
-  bool command_relay = false;
+  
+  static bool command_relay = false;
 
   static unsigned long lastPressTime = 0;
   static bool lastButtonState = HIGH;
@@ -63,21 +63,22 @@ void loop() {
   if (lastButtonState == HIGH && buttonState == LOW) {
     if (now - lastPressTime >= DEBOUNCE_TIME) {
       lastPressTime = now;
-      
 
       STATUS_RELAY = !STATUS_RELAY; // змінюємо стан реле на протилежний
       relay_SetState(STATUS_RELAY); // керування реле відповідно до STATUS_RELAY
       time_command_change_state = now;
-      command_relay = true; 
+      command_relay = true;  // зміни в реле без команди не будуть враховані (якщо перебої в живленні)
     }
   }
   lastButtonState = buttonState;
 
 
   bool RelayState = digitalRead(POSITION_RELAY_PIN);
-  static bool pastRelayState = RelayState;
-  static bool confermRelayState = RelayState;
-  static unsigned long pastRelayStateTime = 0;
+  static bool pastRelayState = RelayState; // попередня зміна стану
+  static bool confermRelayState = RelayState; // перевірена зміна стану 
+  static unsigned long pastRelayStateTime = 0; // попередній момент зміни стану реле
+  static unsigned long relay_operation_time = 0; // час зміни стану реле
+
   // відслідковуємо зміну стану
   if (RelayState!=pastRelayState){
 
@@ -88,15 +89,16 @@ void loop() {
   if ((now - pastRelayStateTime >= RELAY_DEBONCE_TIME) && (RelayState != confermRelayState)){
       
     confermRelayState = RelayState;
-    relay_operation_time = pastRelayStateTime - time_command_change_state;
+    if (command_relay){
+      relay_operation_time = pastRelayStateTime - time_command_change_state;
 
-    if (confermRelayState) {
-      Serial.printf("Relay is OFF. Time since command: %lu ms\n", relay_operation_time);
+      if (confermRelayState) {
+        Serial.printf("Relay is OFF. Time since command: %lu ms\n", relay_operation_time);
+      }
+      else {
+        Serial.printf("Relay is ON. Time since command: %lu ms\n", relay_operation_time);
+      }
     }
-    else {
-      Serial.printf("Relay is ON. Time since command: %lu ms\n", relay_operation_time);
-    }
-  
   }
 
   
