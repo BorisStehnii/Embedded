@@ -102,7 +102,6 @@ pinMode(LED_2, OUTPUT);
 pinMode(LED_3, OUTPUT);
 pinMode(BUTTON_PIN, INPUT_PULLUP);
 Serial.begin(115200);
-
 }
 
 void loop() {
