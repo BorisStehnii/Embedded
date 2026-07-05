@@ -1,121 +1,136 @@
 #include <Arduino.h>
 
+#define BUTTON_PIN 2
+#define DEBOUNCE_TIME 50
 
-const uint8_t BUTTON_PIN = 2;
-const uint8_t LED_PIN = 41;
 
-hw_timer_t *timer = NULL;
-volatile bool ledState = false;
+int counter = 0;
 
-void IRAM_ATTR ledTimerISR(){
-  ledState = !ledState;
-  digitalWrite(LED_PIN, ledState);
+volatile bool change_flag = false;
+volatile bool press_handling_flag = false; // флаг на запуск обробки натискання
+volatile bool debounce_flag = false; // флаг на запуск дебоунс
+volatile bool tempering_flag = false; // флаг на відпускання
+
+
+
+unsigned long last = 0;
+unsigned long debounce_Start = 0; // момент натискання кнопки
+unsigned long tempering_Start = 0; //момент відпускання
+
+
+
+void IRAM_ATTR ISR_button(){
+  change_flag = true;
+}
+
+void setup() {
+  pinMode(BUTTON_PIN, INPUT); 
+  Serial.begin(115200); 
+  attachInterrupt(BUTTON_PIN, ISR_button, FALLING); // апаратне переривання
+}
+
+void loop() {
+  
+  unsigned long now = millis(); // зчитуємо ниниішній час
+
+  // перевіряємо флаг від апаратного переривання
+  if (change_flag){
+    
+    change_flag = false;
+
+    if (!press_handling_flag && !debounce_flag){
+      debounce_Start = now;
+      debounce_flag = true;
+    }
+  }
+
+  // перевірка реального стану за 50мс
+  if (debounce_flag && now - debounce_Start >= DEBOUNCE_TIME) {
+      debounce_flag = false;
+
+      if (digitalRead(BUTTON_PIN) == LOW){
+
+        counter++;
+        press_handling_flag = true;
+
+        Serial.printf(" Counter %d \n", counter);
+      }
+  }
+  // очікуване відпускання 
+  if (press_handling_flag){
+
+    if (digitalRead(BUTTON_PIN) == HIGH){
+
+      if (!tempering_flag){
+        tempering_Start = now;
+        tempering_flag = true;
+      }
+
+      // кнопка відпущенна стабільно 50мс
+      if (now - tempering_Start >= DEBOUNCE_TIME){
+        press_handling_flag = false;
+        tempering_flag = false;
+      }
+
+    }
+    else{
+      // це був брязкіт
+      tempering_flag = false;
+    }
+
+  }
 }
 
 
-void setup(){
-  Serial.begin(115200);
-  pinMode(LED_PIN, OUTPUT);
-  pinMode(BUTTON_PIN, INPUT);
-  timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(timer, &ledTimerISR, true);
-
-  timerAlarmWrite(timer, 500000, true);
-  timerAlarmEnable(timer);
-
-}
+////////////////////////////////////////////////////////////////////////////
+// домашне 2.4 завдання 2
+// #define BUTTON_PIN 2
 
 
-void loop(){
-  Serial.printf("Hard work");
-  delay(3000);
-}
-/////////////////////////////////////////////////////////////
-// практика №2
-// const uint8_t BUTTON_PIN = 2;
+// int counter = 0;
+// volatile bool change_flag = false;
 
-// volatile int pulseCount = 0;
-// unsigned long lastReportTime = 0;
+// unsigned long last = 0;
 
-// volatile bool toggleFlag = false;
+// #define DEBOUNCE_TIME 50
 
-// // змінні для програмного усунення брязкоту
-// const unsigned long DEBOUNCE_TIME = 10;
-// volatile long lastInteraptTime = 0;
-
-
-// void IRAM_ATTR buttonISR(){
-//   unsigned long currentTime = millis();
-//   // перевірка на брязкіт. 
-//   if(currentTime - lastInteraptTime > DEBOUNCE_TIME){
-//     pulseCount++;
-//     lastInteraptTime = currentTime;
-//   }
+// void IRAM_ATTR ISR_button(){
+//   change_flag = true;
 // }
 
-
-// void setup(){
+// void setup() {
+//   pinMode(BUTTON_PIN, INPUT);
 //   Serial.begin(115200);
-//   pinMode(BUTTON_PIN, INPUT);
-//   attachInterrupt(BUTTON_PIN, buttonISR, FALLING);
+//   attachInterrupt(BUTTON_PIN, ISR_button, FALLING);
 // }
 
+// void loop() {
+//   if (change_flag){
+    
+//     change_flag = false;
 
-// void loop(){
-//   if (millis()-lastReportTime >= 1000){
-//     int current = pulseCount;
-//     pulseCount = 0;
-//     if (current > 0){
-//       Serial.printf("%d \n", current);
+    
+//     unsigned long now = millis();
+
+//     if (now - last >= DEBOUNCE_TIME) {
+//       last = now;
+//       counter++;
+//       Serial.printf(" Counter %d \n", counter);
 //     }
-//   lastReportTime = millis();
-//   }
-// }
-
-////////////////////////////////////////////////////////////
-// практична робота №1
-// const uint8_t BUTTON_PIN = 2;
-// const uint8_t LED_PIN = 41;
-
-// volatile bool toggleFlag = false;
-
-// // змінні для програмного усунення брязкоту
-// const unsigned long DEBOUNCE_TIME = 200;
-// volatile long lastInteraptTime = 0;
-
-
-// void IRAM_ATTR buttonISR(){
-//   unsigned long currentTime = millis();
-//   // перевірка на брязкіт. 
-//   if(currentTime - lastInteraptTime >DEBOUNCE_TIME){
-//     toggleFlag = true;
-//     lastInteraptTime = currentTime;
 //   }
 // }
 
 
-// void setup(){
-//   pinMode(LED_PIN, OUTPUT);
-//   pinMode(BUTTON_PIN, INPUT);
-//   attachInterrupt(BUTTON_PIN, buttonISR, FALLING);
-// }
 
 
-// void loop(){
-//   if (toggleFlag){
-//     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-//     toggleFlag = false;
-//   }
-// }
-
-// домашне завдання 2.4 з1
+////////////////////////////////////////////////////////////////////////////
+// домашне 2.4 завдання 1
 // #define BUTTON_PIN 2
 
 
 // volatile int counter = 0;
 // volatile bool change_flag = false;
 
-// #define DEBOUNCE_TIME 150
 
 // void IRAM_ATTR INCREMENT_counter(){
 //   counter++;

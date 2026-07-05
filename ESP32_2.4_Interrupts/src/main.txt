@@ -1,0 +1,111 @@
+#include <Arduino.h>
+
+
+const uint8_t BUTTON_PIN = 2;
+const uint8_t LED_PIN = 41;
+
+hw_timer_t *timer = NULL;
+volatile bool ledState = false;
+
+void IRAM_ATTR ledTimerISR(){
+  ledState = !ledState;
+  digitalWrite(LED_PIN, ledState);
+}
+
+
+void setup(){
+  Serial.begin(115200);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT);
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &ledTimerISR, true);
+
+  timerAlarmWrite(timer, 500000, true);
+  timerAlarmEnable(timer);
+
+}
+
+
+void loop(){
+  Serial.printf("Hard work \n");
+  delay(3000);
+}
+
+
+/////////////////////////////////////////////////////////////
+// практика №2
+// const uint8_t BUTTON_PIN = 2;
+
+// volatile int pulseCount = 0;
+// unsigned long lastReportTime = 0;
+
+// volatile bool toggleFlag = false;
+
+// // змінні для програмного усунення брязкоту
+// const unsigned long DEBOUNCE_TIME = 10;
+// volatile long lastInteraptTime = 0;
+
+
+// void IRAM_ATTR buttonISR(){
+//   unsigned long currentTime = millis();
+//   // перевірка на брязкіт. 
+//   if(currentTime - lastInteraptTime > DEBOUNCE_TIME){
+//     pulseCount++;
+//     lastInteraptTime = currentTime;
+//   }
+// }
+
+
+// void setup(){
+//   Serial.begin(115200);
+//   pinMode(BUTTON_PIN, INPUT);
+//   attachInterrupt(BUTTON_PIN, buttonISR, FALLING);
+// }
+
+
+// void loop(){
+//   if (millis()-lastReportTime >= 1000){
+//     int current = pulseCount;
+//     pulseCount = 0;
+//     if (current > 0){
+//       Serial.printf("%d \n", current);
+//     }
+//   lastReportTime = millis();
+//   }
+// }
+
+////////////////////////////////////////////////////////////
+// практична робота №1
+// const uint8_t BUTTON_PIN = 2;
+// const uint8_t LED_PIN = 41;
+
+// volatile bool toggleFlag = false;
+
+// // змінні для програмного усунення брязкоту
+// const unsigned long DEBOUNCE_TIME = 200;
+// volatile long lastInteraptTime = 0;
+
+
+// void IRAM_ATTR buttonISR(){
+//   unsigned long currentTime = millis();
+//   // перевірка на брязкіт. 
+//   if(currentTime - lastInteraptTime >DEBOUNCE_TIME){
+//     toggleFlag = true;
+//     lastInteraptTime = currentTime;
+//   }
+// }
+
+
+// void setup(){
+//   pinMode(LED_PIN, OUTPUT);
+//   pinMode(BUTTON_PIN, INPUT);
+//   attachInterrupt(BUTTON_PIN, buttonISR, FALLING);
+// }
+
+
+// void loop(){
+//   if (toggleFlag){
+//     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+//     toggleFlag = false;
+//   }
+// }
