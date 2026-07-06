@@ -9,7 +9,8 @@ int counter = 0;
 unsigned long lastPollTime = 0;
 unsigned long debounceStart = 0;
 
-enum class ButtonState
+// машина станів
+enum class ButtonState 
 {
   Released,
   DebouncePress,
